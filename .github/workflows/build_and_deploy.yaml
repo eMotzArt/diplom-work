@@ -42,7 +42,7 @@ jobs:
 #        id: vars
 #        run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
       - name: decode env
-      - uses: anthonykgross/ansible-vault-cli-github-action@v1
+        uses: anthonykgross/ansible-vault-cli-github-action@v1
         with:
           vault_key: ${{ secrets.ANSIBLE_PASSWORD }}
           command: "ansible-vault decrypt deploy/.env"
