@@ -25,9 +25,6 @@ services:
     restart: always
     env_file:
       - .env
-    environment:
-      DB_HOST: postgres
-#      DEBUG: false
     depends_on:
       postgres:
         condition: service_healthy
