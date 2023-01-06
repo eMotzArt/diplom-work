@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+
+  postgres:
+#    container_name: diplom_db
+    image: postgres:14.6-alpine
+#    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    healthcheck:
+#      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: pg_isready -U ${DB_USER} -d ${DB_NAME}
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  api:
+#    container_name: diplom_api
+    build: .
+#    restart: always
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+#    volumes:
+#      - ./todolist/:/app/todolist
+
+  front:
+    image: sermalenk/skypro-front:lesson-34
+#    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      api:
+        condition: service_started
+volumes:
+ postgres_data:
