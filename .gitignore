@@ -162,3 +162,5 @@ cython_debug/
 # postgre compose file (have secret info)
 db/
 
+# django static files
+static
