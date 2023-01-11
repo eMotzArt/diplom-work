@@ -5,4 +5,6 @@ from django.db import models
 
 
 class User(AbstractUser):
-    pass
+    first_name = models.CharField(max_length=150, blank=False)
+    last_name = models.CharField(max_length=150, blank=False)
+    email = models.EmailField(blank=False)
