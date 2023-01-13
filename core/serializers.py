@@ -7,10 +7,10 @@ from core.models import User
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
-    password_repeat = serializers.CharField(required=True, write_only=True)
+    password_repeat = serializers.CharField(required=True, write_only=True, style={'input_type': 'password'})
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
-    password = serializers.CharField(required=True, write_only=True)
+    password = serializers.CharField(required=True, write_only=True, style={'input_type': 'password'})
 
     class Meta:
         model = User
@@ -40,37 +40,37 @@ class ProfileRetrieveUpdateSerializer(serializers.ModelSerializer):
 
 
 class PasswordUpdateSerializer(serializers.ModelSerializer):
-    old_password = serializers.CharField(required=True, write_only=True)
-    new_password = serializers.CharField(required=True, write_only=True)
+    old_password = serializers.CharField(required=True, write_only=True, style={'input_type': 'password'})
+    new_password = serializers.CharField(required=True, write_only=True, style={'input_type': 'password'})
 
     class Meta:
         model = User
         fields = ['old_password', 'new_password']
 
     def validate_new_password(self, password):
-        validate_password(password=password, user=User)
+        validate_password(password=password, user=self.instance)
         return password
 
-    def update(self, instance, validated_data):
+    def validate_old_password(self, password):
         # Возможность залогинившихся через VK OAuth2 задать пароль
-        if instance.password[:13] != 'pbkdf2_sha256' and instance.password[:1] == '!':
-            instance.set_password(validated_data['new_password'])
-            instance.save()
-            return instance
+        if (self.instance.password[:13] != 'pbkdf2_sha256' and self.instance.password[:1] == '!') \
+                or self.instance.check_password(password):
+            return password
+        raise serializers.ValidationError('Password is incorrect')
 
-        if check_password(validated_data['old_password'], instance.password):
-            instance.set_password(validated_data['new_password'])
-            instance.save()
-            return instance
+
+    def update(self, instance, validated_data):
+        instance.set_password(validated_data['new_password'])
+        instance.save()
+        return instance
 
 
 class UserLoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
-    password = serializers.CharField(required=True)
+    password = serializers.CharField(required=True, style={'input_type': 'password'})
 
     def validate(self, attrs):
         user = authenticate(**attrs)
         if not user:
             raise serializers.ValidationError('Username or password is incorrect')
         return attrs
-    
