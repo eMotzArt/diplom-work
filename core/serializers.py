@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.hashers import check_password
 from rest_framework import serializers
 
 from core.models import User
@@ -37,6 +38,32 @@ class ProfileRetrieveUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email']
 
+
+class PasswordUpdateSerializer(serializers.ModelSerializer):
+    old_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['old_password', 'new_password']
+
+    def validate_new_password(self, password):
+        validate_password(password=password, user=User)
+        return password
+
+    def update(self, instance, validated_data):
+        # Возможность залогинившихся через VK OAuth2 задать пароль
+        if instance.password[:13] != 'pbkdf2_sha256' and instance.password[:1] == '!':
+            instance.set_password(validated_data['new_password'])
+            instance.save()
+            return instance
+
+        if check_password(validated_data['old_password'], instance.password):
+            instance.set_password(validated_data['new_password'])
+            instance.save()
+            return instance
+
+
 class UserLoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     password = serializers.CharField(required=True)
@@ -46,3 +73,4 @@ class UserLoginSerializer(serializers.Serializer):
         if not user:
             raise serializers.ValidationError('Username or password is incorrect')
         return attrs
+    

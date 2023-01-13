@@ -1,11 +1,13 @@
 from django.contrib.auth import login, logout
 from django.http import JsonResponse
-from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView, GenericAPIView
+from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView, \
+    get_object_or_404, UpdateAPIView, GenericAPIView
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from core.models import User
-from core.serializers import UserCreateSerializer, ProfileRetrieveUpdateSerializer, UserLoginSerializer
+from core.serializers import UserCreateSerializer, ProfileRetrieveUpdateSerializer, PasswordUpdateSerializer, \
+    UserLoginSerializer
 
 
 # Create your views here.
@@ -57,3 +59,12 @@ class ProfileView(RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         logout(request)
         return JsonResponse({'message': 'Logout successfully complete'}, safe=False, status=status.HTTP_204_NO_CONTENT)
+
+
+class PasswordUpdateView(UpdateAPIView):
+    serializer_class = PasswordUpdateSerializer
+    queryset = User.objects.all()
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self):
+        return self.request.user
