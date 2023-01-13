@@ -63,7 +63,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
-          script: cd diplom-work && docker-compose up -d
+          script: cd diplom-work && docker-compose pull api && docker-compose up -d
       - name: Clean after deploy
         if: always()
         uses: appleboy/ssh-action@master
