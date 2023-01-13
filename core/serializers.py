@@ -32,6 +32,11 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return user
 
 
+class ProfileRetrieveUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email']
+
 class UserLoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     password = serializers.CharField(required=True)
