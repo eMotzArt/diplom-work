@@ -1,7 +1,6 @@
 from django.contrib.auth import login, logout
 from django.http import JsonResponse
-from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView, \
-    get_object_or_404, UpdateAPIView, GenericAPIView
+from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView, GenericAPIView
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response

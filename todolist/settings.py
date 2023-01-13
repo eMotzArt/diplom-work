@@ -51,7 +51,7 @@ INSTALLED_APPS = [
 
     'core',
     'rest_framework',
-
+    'social_django',
 ]
 
 MIDDLEWARE = [
@@ -100,6 +100,11 @@ DATABASES = {
 
 }
 
+# Authentication backends
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'social_core.backends.vk.VKOAuth2',
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -145,3 +150,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Default user model
 AUTH_USER_MODEL = "core.User"
+
+
+# DRM settings
+REST_FRAMEWORK = {
+    # "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    # "PAGE_SIZE": 4,
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+    #     "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    # "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema"
+}
+
+
+#Social django settings
+SOCIAL_AUTH_JSONFIELD_ENABLED = True
+
+SOCIAL_AUTH_VK_OAUTH2_KEY = env('VK_OAUTH2_KEY')
+SOCIAL_AUTH_VK_OAUTH2_SECRET = env('VK_OAUTH2_SECRET')
+
+SOCIAL_AUTH_VK_OAUTH2_SCOPE = ['email']
+
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/logged-in/'
+SOCIAL_AUTH_LOGIN_ERROR_URL = '/login-error/'
+
+#exceptions middleware for social auth
+MIDDLEWARE += ['social_django.middleware.SocialAuthExceptionMiddleware']
