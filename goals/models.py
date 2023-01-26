@@ -19,6 +19,9 @@ class Board(BaseModel):
         verbose_name = "Доска"
         verbose_name_plural = "Доски"
 
+    def __str__(self):
+        return self.title
+
 
 class Category(BaseModel):
     title = models.CharField(max_length=50, verbose_name="Название")
