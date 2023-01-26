@@ -1,14 +1,18 @@
 # 3rd-party import
+from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, filters
 from rest_framework import viewsets
 
 # app import
-from goals.filters import GoalDateFilter, CommentGoalFilter
-from goals.models import Goal, Category, Comment
-from goals.serializers import CategoryCreateSerializer, CategoryListSerializer, CategoryUpdateSerializer, \
-    GoalCreateSerializer, GoalListSerializer, GoalUpdateSerializer,\
-    CommentListSerializer, CommentCreateSerializer, CommmentUpdateSerializer
+from goals.filters import GoalDateFilter, CommentGoalFilter, BoardCategoryFilter
+from goals.models import Goal, Category, Comment, Board
+from goals.permissions import IsBoardParticipant, IsGoalWriterOrOwner, IsCategoryWriterOrOwner, IsCommentWriterOrOwner
+from goals.serializers import (
+    CategoryListSerializer, CategoryCreateSerializer, CategoryUpdateSerializer,
+    GoalListSerializer, GoalCreateSerializer, GoalUpdateSerializer,
+    CommentListSerializer, CommentCreateSerializer, CommmentUpdateSerializer,
+    BoardListSerializer, BoardCreateSerializer, BoardRetrieveSerializer, BoardUpdateSerializer)
 
 
 class CategoriesViews(viewsets.ModelViewSet):
@@ -22,25 +26,27 @@ class CategoriesViews(viewsets.ModelViewSet):
         'update': CategoryUpdateSerializer,
     }
     serializer_class = CategoryCreateSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsCategoryWriterOrOwner]
+
+    # filtering
+    filter_backends = [
+        DjangoFilterBackend,
+    ]
+    filterset_class = BoardCategoryFilter
+
 
     # overrides
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user, is_deleted=False)
+        return self.queryset.filter(board__participants__user=self.request.user, is_deleted=False)
 
     def get_serializer_class(self):
         return self.serializers.get(self.action)
 
-    # def perform_create(self, serializer):
-    #     serializer.save(user=self.request.user)
-
-    def perform_update(self, serializer):
-        serializer.save(user=self.request.user)
-
     def perform_destroy(self, instance):
-        instance.is_deleted = True
-        instance.archive_related_goals()
-        instance.save()
+        with transaction.atomic():
+            instance.is_deleted = True
+            instance.goals.all().update(status=4)
+            instance.save()
 
 
 class GoalsViews(viewsets.ModelViewSet):
@@ -53,7 +59,7 @@ class GoalsViews(viewsets.ModelViewSet):
         'create': GoalCreateSerializer,
         'update': GoalUpdateSerializer,
     }
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsGoalWriterOrOwner]
 
     # filtering
     filter_backends = [
@@ -68,7 +74,8 @@ class GoalsViews(viewsets.ModelViewSet):
 
     # overrides
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user, status__in=[1, 2, 3])
+        accessed_categories = Category.objects.filter(board__participants__user=self.request.user, is_deleted=False)
+        return Goal.objects.filter(category__in=accessed_categories, status__in=[1, 2, 3])
 
     def get_serializer_class(self):
         return self.serializers.get(self.action)
@@ -94,7 +101,7 @@ class CommentsViews(viewsets.ModelViewSet):
         'create': CommentCreateSerializer,
         'update': CommmentUpdateSerializer,
     }
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsCommentWriterOrOwner]
 
     # filtering
     filter_backends = [
@@ -107,7 +114,8 @@ class CommentsViews(viewsets.ModelViewSet):
 
     # overrides
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user, goal__status__in=[1, 2, 3])
+        accessed_categories = Category.objects.filter(board__participants__user=self.request.user, is_deleted=False)
+        return self.queryset.filter(goal__category__in=accessed_categories, goal__status__in=[1, 2, 3])
 
     def get_serializer_class(self):
         return self.serializers.get(self.action)
@@ -117,4 +125,36 @@ class CommentsViews(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         serializer.save(user=self.request.user)
+
+class BoardsViews(viewsets.ModelViewSet):
+    # service
+    http_method_names = ['get', 'post', 'put', 'delete']
+    queryset = Board.objects.all()
+    serializers = {
+        'list': BoardListSerializer,
+        'retrieve': BoardRetrieveSerializer,
+        'create': BoardCreateSerializer,
+        'update': BoardUpdateSerializer,
+    }
+    permission_classes = [permissions.IsAuthenticated, IsBoardParticipant]
+
+    # filtering
+    filter_backends = [
+        filters.OrderingFilter,
+    ]
+    ordering = ['title', ]
+
+    # overrides
+    def get_queryset(self):
+        return self.queryset.select_related().filter(participants__user=self.request.user, is_deleted=False)
+
+    def get_serializer_class(self):
+        return self.serializers.get(self.action)
+
+    def perform_destroy(self, instance):
+        with transaction.atomic():
+            instance.is_deleted = True
+            [category.goals.update(status=4) for category in instance.categories.all()]
+            instance.categories.update(is_deleted=True)
+            instance.save()
 

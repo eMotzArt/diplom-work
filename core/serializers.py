@@ -1,9 +1,10 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth.hashers import check_password
+from django.utils import timezone
 from rest_framework import serializers
 
 from core.models import User
+from goals.models import Board, BoardParticipant
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -26,10 +27,25 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
     def create(self, validated_data):
-        # validate_password(validated_data['password'], User)
         user = super().create(validated_data)
         user.set_password(validated_data['password'])
         user.save()
+
+        # create default user board
+        first_user_board = Board.objects.create(
+            title="Мои цели",
+            created=timezone.now(),
+            updated=timezone.now()
+        )
+
+        BoardParticipant.objects.create(
+            user=user,
+            board=first_user_board,
+            role=BoardParticipant.Role.owner,
+            created=timezone.now(),
+            updated=timezone.now()
+        )
+
         return user
 
 

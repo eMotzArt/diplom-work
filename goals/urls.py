@@ -24,4 +24,10 @@ urlpatterns = [
                                                            'put': 'update',
                                                            'delete': 'destroy'})),
 
+    #board
+    path('board/list', views.BoardsViews.as_view({'get': 'list'})),
+    path('board/create', views.BoardsViews.as_view({'post': 'create'})),
+    path('board/<pk>', views.BoardsViews.as_view({'get': 'retrieve',
+                                                         'put': 'update',
+                                                         'delete': 'destroy'})),
 ]

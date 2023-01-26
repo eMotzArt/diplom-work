@@ -11,16 +11,20 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
+class Board(BaseModel):
+    title = models.CharField(max_length=50, blank=False, verbose_name='Название')
+    is_deleted = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Доска"
+        verbose_name_plural = "Доски"
+
 
 class Category(BaseModel):
     title = models.CharField(max_length=50, verbose_name="Название")
     user = models.ForeignKey(USER, on_delete=models.CASCADE, verbose_name="Автор")
     is_deleted = models.BooleanField(default=False)
-
-    def archive_related_goals(self):
-        for related_goal in self.goals.all():
-            related_goal.status = 4
-            related_goal.save()
+    board = models.ForeignKey(Board, verbose_name="Доска", on_delete=models.PROTECT, related_name="categories")
 
     class Meta:
         verbose_name = "Категория"
@@ -59,7 +63,6 @@ class Goal(BaseModel):
     due_date = models.DateField(verbose_name='Дедлайн')
 
     class Meta:
-        # ordering = ['priority', 'due_date']
         verbose_name = "Цель"
         verbose_name_plural = "Цели"
 
@@ -72,6 +75,22 @@ class Comment(BaseModel):
     text = models.TextField(verbose_name='Текст')
 
     class Meta:
-        # ordering = ['-created', ]
         verbose_name = "Комментарий"
         verbose_name_plural = "Комментарии"
+
+
+class BoardParticipant(BaseModel):
+    class Role(models.IntegerChoices):
+        owner = 1, "Владелец"
+        writer = 2, "Редактор"
+        reader = 3, "Читатель"
+
+    board = models.ForeignKey(Board, on_delete=models.PROTECT, related_name="participants", verbose_name='Доска')
+    user = models.ForeignKey(USER, on_delete=models.PROTECT, related_name="participants", verbose_name='Участник')
+    role = models.PositiveSmallIntegerField(choices=Role.choices, default=Role.owner, verbose_name="Роль")
+
+    class Meta:
+        unique_together = ("board", "user")
+        verbose_name = "Участник"
+        verbose_name_plural = "Участники"
+

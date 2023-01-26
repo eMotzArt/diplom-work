@@ -1,7 +1,7 @@
 from django.db import models
 from django_filters import rest_framework, IsoDateTimeFilter
 
-from goals.models import Goal, Comment
+from goals.models import Goal, Comment, Category
 
 
 class GoalDateFilter(rest_framework.FilterSet):
@@ -24,4 +24,12 @@ class CommentGoalFilter(rest_framework.FilterSet):
         model = Comment
         fields = {
             "goal": ("exact",)
+        }
+
+
+class BoardCategoryFilter(rest_framework.FilterSet):
+    class Meta:
+        model = Category
+        fields = {
+            "board": ("exact", ),
         }
