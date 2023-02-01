@@ -15,6 +15,7 @@ djangorestframework = "^3.14.0"
 p = "^1.4.0"
 social-auth-app-django = "^5.0.0"
 django-filter = "^22.1"
+dataclasses-json = "^0.5.7"
 
 
 [tool.poetry.group.dev.dependencies]
