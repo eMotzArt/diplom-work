@@ -52,6 +52,19 @@ services:
     volumes:
       - django_static:/app/static
 
+  bot:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+    command: python3 manage.py runbot
+
   front:
     image: sermalenk/skypro-front:lesson-38
 #    restart: always
