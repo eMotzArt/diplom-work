@@ -62,13 +62,16 @@ class BotManager:
 
     def get_user_goals(self):
         user_goals = Goal.objects.filter(user=self.current_user.app_user).all()
-        goals_list = [f"#{goal.id} {goal.title}" for goal in user_goals]
-        return "\n".join(goals_list)
+        if user_goals:
+            goals_list = [f"#{goal.id} {goal.title}" for goal in user_goals]
+            return "\n".join(goals_list)
+        return "You have no goals"
 
     def get_user_categories(self):
         user_categories = Category.objects.filter(user=self.current_user.app_user).all()
-        categories_list = [f"#{cat.id} {cat.title}" for cat in user_categories]
-        return "\n".join(categories_list)
+        if user_categories:
+            categories_list = [f"#{cat.id} {cat.title}" for cat in user_categories]
+            return "\n".join(categories_list)
 
     def set_user_step(self, step):
         self.current_state.step = step
@@ -101,15 +104,20 @@ class BotManager:
 
     def step_zero(self):
         if self.message == '/create':
+            user_categories = self.get_user_categories()
+            if not user_categories:
+                self.tg_client.send_message(self.chat_id, f"You have no categories")
+                return
             self.set_user_step(1)
             self.tg_client.send_message(self.chat_id, f"Which category do you want to select?\n"
                                                       f"Send category number or title\n"
-                                                      f"{self.get_user_categories()}")
+                                                      f"{user_categories}")
             return
 
         if self.message == '/goals':
             goals = self.get_user_goals()
             self.tg_client.send_message(self.chat_id, goals)
+
         elif self.message == '/start':
             self.tg_client.send_message(self.chat_id, "You can user /goals or /create commands")
         else:
