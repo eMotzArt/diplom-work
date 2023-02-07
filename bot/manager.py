@@ -41,9 +41,7 @@ class BotManager:
         return code
 
     def verificate_user(self):
-        verification_code = self._get_random_code(20)
-        self.current_user.verification_code = verification_code
-        self.current_user.save()
+        verification_code = self.current_user.get_verification_code()
         self.tg_client.send_message(self.chat_id, f"Your verification code is: [{verification_code}]\n"
                                         f"Please put the verification code in to web-site")
     def is_app_user(self):
@@ -56,44 +54,44 @@ class BotManager:
     def get_user_step(self):
         self.current_step = self.current_state.step
 
-    def clean_state(self):
-        self.current_state.step = 0
-        self.current_state.save()
-
     def get_user_goals(self):
-        user_goals = Goal.objects.filter(user=self.current_user.app_user).all()
+        accessed_categories = Category.objects.filter(board__participants__user=self.current_user.app_user,
+                                                      is_deleted=False)
+        user_goals = Goal.objects.filter(category__in=accessed_categories, status__in=[1, 2, 3]).all()
+
         if user_goals:
             goals_list = [f"#{goal.id} {goal.title}" for goal in user_goals]
             return "\n".join(goals_list)
         return "You have no goals"
 
     def get_user_categories(self):
-        user_categories = Category.objects.filter(user=self.current_user.app_user).all()
+        user_categories = Category.objects.filter(board__participants__user=self.current_user.app_user, is_deleted=False)
+
         if user_categories:
             categories_list = [f"#{cat.id} {cat.title}" for cat in user_categories]
             return "\n".join(categories_list)
 
     def set_user_step(self, step):
-        self.current_state.step = step
-        self.current_state.save()
+        self.current_state.set_step(step)
         self.current_step = step
 
     def get_category_by_num_or_title(self):
+        filters = {
+            'board__participants__user': self.current_user.app_user,
+            'is_deleted': False,
+            'title': None if self.message.isnumeric() else self.message,
+            'pk': None if not self.message.isnumeric() else int(self.message)
+        }
         if self.message.isnumeric():
-            if Category.objects.filter(user=self.current_user.app_user, pk=int(self.message)).exists():
-                return Category.objects.filter(user=self.current_user.app_user, pk=int(self.message)).first()
-            return None
+            filters.pop('title')
+        else:
+            filters.pop('pk')
 
-        if Category.objects.filter(user=self.current_user.app_user, title=self.message).exists():
-            return Category.objects.filter(user=self.current_user.app_user, title=self.message).first()
-        return None
+        user_categories = Category.objects.filter(**filters).first()
+        return user_categories
 
     def set_user_category(self, category):
         TgState.objects.filter(tg_user=self.current_user).update(category=category)
-
-    def set_user_title(self):
-        self.current_state.title = self.message
-        self.current_state.save()
 
     def create_goal(self):
         created_goal = Goal.objects.create(user=self.current_user.app_user,
@@ -111,7 +109,8 @@ class BotManager:
             self.set_user_step(1)
             self.tg_client.send_message(self.chat_id, f"Which category do you want to select?\n"
                                                       f"Send category number or title\n"
-                                                      f"{user_categories}")
+                                                      f"{user_categories}\n"
+                                                      f"Also you can send /cancel to abort")
             return
 
         if self.message == '/goals':
@@ -125,18 +124,19 @@ class BotManager:
 
     def step_one(self):
         if category := self.get_category_by_num_or_title():
-            self.tg_client.send_message(self.chat_id, f"Write goal title")
+            self.tg_client.send_message(self.chat_id, f"Write goal title to create or /cancel to abort")
             self.set_user_step(2)
             self.set_user_category(category)
             return
 
         self.tg_client.send_message(self.chat_id, f"Which category do you want to select?\n"
                                         f"Send category number or title\n"
-                                        f"{self.get_user_categories()}")
+                                        f"{self.get_user_categories()}\n"
+                                        f"Also you can send /cancel to abort")
 
     def step_two(self):
         if len(self.message) <= 100:
-            self.set_user_title()
+            self.current_state.set_title(self.message)
             self.set_user_step(3)
             return True
 
@@ -146,7 +146,7 @@ class BotManager:
 
     def step_three(self):
         created_goal = self.create_goal()
-        self.clean_state()
+        self.current_state.clean_state()
         self.tg_client.send_message(self.chat_id, f"Goal successfully created\n"
                                         f"#{created_goal.id} {created_goal.title}")
 
@@ -155,7 +155,7 @@ class BotManager:
         self.get_user_step()
 
         if self.current_step != 0 and self.message == '/cancel':
-            self.clean_state()
+            self.current_state.clean_state()
             self.tg_client.send_message(self.chat_id, 'Goal creation cancelled')
             return
 
@@ -173,15 +173,15 @@ class BotManager:
             if is_ready_to_create:
                 self.step_three()
 
-
+    def collect_data(self, message):
+        self.offset = message.update_id + 1
+        self.chat_id = message.message.chat.id
+        self.user_id = message.message.from_.id
+        self.message = message.message.text
 
     def process_response(self):
         for item in self.response.result:
-
-            self.offset = item.update_id + 1
-            self.chat_id = item.message.chat.id
-            self.user_id = item.message.from_.id
-            self.message = item.message.text
+            self.collect_data(item)
 
             if not self.user_exists() and self.message != '/start':
                 # send instruction or do nothing (quiet mode)

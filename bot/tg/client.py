@@ -5,6 +5,11 @@ from bot.tg.dc import GetUpdatesResponse, SendMessageResponse
 
 
 class TgClient:
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super().__new__(cls, *args, **kwargs)
+        return cls.instance
+
     def __init__(self):
         self.token = os.getenv('BOT_TOKEN')
         self.link = f'https://api.telegram.org/bot{self.token}'
