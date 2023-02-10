@@ -94,7 +94,7 @@ class BotManager:
         """Метод формирует и возвращает строку со списком категорий пользователя или строку с ответом что их нет
 
         """
-        user_categories = Category.objects.filter(board__participants__user=self.current_user.app_user, is_deleted=False)
+        user_categories = Category.objects.filter(board__participants__user=self.current_user.app_user, board__participants__role__in=[1,2], is_deleted=False)
 
         if user_categories:
             categories_list = [f"#{cat.id} {cat.title}" for cat in user_categories]
