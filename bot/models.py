@@ -20,13 +20,13 @@ class TgUser(models.Model):
         verbose_name = "Бот->Пользователь"
         verbose_name_plural = "Бот->Пользователи"
 
-    def _get_random_string(self):
+    def _get_random_string(self) -> str:
         length = 10
         letters = string.ascii_lowercase
         code = ''.join(random.choice(letters) for i in range(length))
         return code
 
-    def get_verification_code(self):
+    def get_verification_code(self) -> str:
         verification_code = self._get_random_string()
         self.verification_code = verification_code
         self.save()
@@ -44,15 +44,15 @@ class TgState(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
     title = models.CharField(max_length=100, null=True)
 
-    def clean_state(self):
+    def clean_state(self) -> None:
         self.step = 0
         self.save()
 
-    def set_step(self, step):
+    def set_step(self, step: int) -> None:
         self.step = step
         self.save()
 
-    def set_title(self, title):
+    def set_title(self, title: str) -> None:
         self.title = title
         self.save()
 

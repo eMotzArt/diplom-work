@@ -1,5 +1,6 @@
 # 3rd-party import
 from django.db import transaction
+from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, filters
 from rest_framework import viewsets
@@ -73,20 +74,20 @@ class GoalsViews(viewsets.ModelViewSet):
     search_fields = ['title', 'description']
 
     # overrides
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         accessed_categories = Category.objects.filter(board__participants__user=self.request.user, is_deleted=False)
         return Goal.objects.filter(category__in=accessed_categories, status__in=[1, 2, 3])
 
     def get_serializer_class(self):
         return self.serializers.get(self.action)
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer) -> None:
         serializer.save(category=Category.objects.get(id=self.request.data['category']))
 
-    def perform_update(self, serializer):
+    def perform_update(self, serializer) -> None:
         serializer.save(user=self.request.user, category=Category.objects.get(id=self.request.data['category']))
 
-    def perform_destroy(self, instance):
+    def perform_destroy(self, instance: Goal) -> None:
         instance.status = 4
         instance.save()
 
@@ -113,17 +114,17 @@ class CommentsViews(viewsets.ModelViewSet):
     ordering = ['-created', ]
 
     # overrides
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         accessed_categories = Category.objects.filter(board__participants__user=self.request.user, is_deleted=False)
         return self.queryset.filter(goal__category__in=accessed_categories, goal__status__in=[1, 2, 3])
 
     def get_serializer_class(self):
         return self.serializers.get(self.action)
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer) -> None:
         serializer.save(goal=Goal.objects.get(pk=self.request.data['goal']))
 
-    def perform_update(self, serializer):
+    def perform_update(self, serializer) -> None:
         serializer.save(user=self.request.user)
 
 class BoardsViews(viewsets.ModelViewSet):
@@ -145,13 +146,13 @@ class BoardsViews(viewsets.ModelViewSet):
     ordering = ['title', ]
 
     # overrides
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         return self.queryset.select_related().filter(participants__user=self.request.user, is_deleted=False)
 
     def get_serializer_class(self):
         return self.serializers.get(self.action)
 
-    def perform_destroy(self, instance):
+    def perform_destroy(self, instance: Board) -> None:
         with transaction.atomic():
             instance.is_deleted = True
             [category.goals.update(status=4) for category in instance.categories.all()]

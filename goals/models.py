@@ -19,7 +19,7 @@ class Board(BaseModel):
         verbose_name = "Доска"
         verbose_name_plural = "Доски"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.title
 
 
@@ -69,7 +69,7 @@ class Goal(BaseModel):
         verbose_name = "Цель"
         verbose_name_plural = "Цели"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.title
 
 class Comment(BaseModel):

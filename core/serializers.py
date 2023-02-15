@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
@@ -17,16 +19,16 @@ class UserCreateSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'password', 'password_repeat']
 
-    def validate_password(self, password):
+    def validate_password(self, password: str) -> str:
         validate_password(password=password, user=User)
         return password
 
-    def validate(self, attrs):
+    def validate(self, attrs: OrderedDict) -> OrderedDict:
         if attrs['password'] != attrs.pop('password_repeat'):
             raise serializers.ValidationError('Passwords do not match',)
         return super().validate(attrs)
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict) -> User:
         user = super().create(validated_data)
         user.set_password(validated_data['password'])
         user.save()
@@ -63,11 +65,11 @@ class PasswordUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = ['old_password', 'new_password']
 
-    def validate_new_password(self, password):
+    def validate_new_password(self, password: str) -> str:
         validate_password(password=password, user=self.instance)
         return password
 
-    def validate_old_password(self, password):
+    def validate_old_password(self, password: str) -> str:
         # Возможность залогинившихся через VK OAuth2 задать пароль
         if (self.instance.password[:13] != 'pbkdf2_sha256' and self.instance.password[:1] == '!') \
                 or self.instance.check_password(password):
@@ -75,7 +77,7 @@ class PasswordUpdateSerializer(serializers.ModelSerializer):
         raise serializers.ValidationError('Password is incorrect')
 
 
-    def update(self, instance, validated_data):
+    def update(self, instance: User, validated_data: dict) -> User:
         instance.set_password(validated_data['new_password'])
         instance.save()
         return instance
@@ -85,7 +87,7 @@ class UserLoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     password = serializers.CharField(required=True, style={'input_type': 'password'})
 
-    def validate(self, attrs):
+    def validate(self, attrs: OrderedDict) -> OrderedDict:
         user = authenticate(**attrs)
         if not user:
             raise serializers.ValidationError('Username or password is incorrect')

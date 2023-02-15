@@ -51,7 +51,7 @@ class GoalCreateSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(),
     )
 
-    def validate_category(self, category):
+    def validate_category(self, category: Category) -> Category:
         if category.is_deleted:
             raise serializers.ValidationError("You cannot create goal with deleted category")
 
@@ -77,9 +77,14 @@ class GoalUpdateSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(),
     )
 
+    def update(self, instance: Goal, validated_data: dict) -> Goal:
+        validated_data.pop('user')
+        return super().update(instance, validated_data)
+
     class Meta:
         model = Goal
         fields = '__all__'
+        read_only_fields = ("id", "created", "updated", "user")
 
 
 # comments
@@ -158,7 +163,7 @@ class BoardUpdateSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ("id", "created", "updated", "board", "is_deleted")
 
-    def update(self, instance, validated_data):
+    def update(self, instance: Board, validated_data: dict) -> Board:
         board_owner = BoardParticipant.objects.filter(board=instance, role=BoardParticipant.Role.owner).first().user
 
         caller = validated_data.pop('user')
@@ -208,7 +213,7 @@ class BoardCreateSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ("id", "created", "updated")
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict) -> Board:
         user = validated_data.pop("user")
         with transaction.atomic():
             board = Board.objects.create(**validated_data)

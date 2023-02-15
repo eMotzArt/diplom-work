@@ -2,6 +2,7 @@ from django.core.exceptions import MultipleObjectsReturned
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from bot.models import TgUser
@@ -16,7 +17,7 @@ class BotVerification(UpdateAPIView):
     serializer_class = TgUserVerificationSerializer
     permission_classes = [IsAuthenticated, ]
 
-    def patch(self, request, *args, **kwargs):
+    def patch(self, request: Request, *args, **kwargs) -> Response:
         try:
             instance = TgUser.objects.get(verification_code=request.data['verification_code'])
         except KeyError:

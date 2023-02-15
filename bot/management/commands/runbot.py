@@ -4,7 +4,7 @@ from bot.manager import BotManager
 
 
 class Command(BaseCommand):
-    def handle(self, *args, **options):
+    def handle(self, *args, **options) -> None:
         bot_manager = BotManager()
         while True:
             bot_manager.get_updates()

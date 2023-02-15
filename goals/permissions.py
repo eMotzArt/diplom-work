@@ -1,10 +1,12 @@
+from django.views import View
 from rest_framework import permissions
+from rest_framework.request import Request
 
-from goals.models import BoardParticipant, Category, Goal
+from goals.models import BoardParticipant, Category, Goal, Board, Comment
 
 
 class IsBoardParticipant(permissions.BasePermission):
-    def has_object_permission(self, request, view, obj):
+    def has_object_permission(self, request: Request, view, obj: Board) -> bool:
         if not request.user.is_authenticated:
             return False
 
@@ -24,7 +26,7 @@ class IsBoardParticipant(permissions.BasePermission):
 
 
 class IsGoalWriterOrOwner(permissions.BasePermission):
-    def has_permission(self, request, view):
+    def has_permission(self, request: Request, view) -> bool:
         if not request.user.is_authenticated:
             return False
 
@@ -42,7 +44,7 @@ class IsGoalWriterOrOwner(permissions.BasePermission):
 
         return True
 
-    def has_object_permission(self, request, view, obj):
+    def has_object_permission(self, request: Request, view, obj: Goal) -> bool:
         if not request.user.is_authenticated:
             return False
 
@@ -64,7 +66,7 @@ class IsGoalWriterOrOwner(permissions.BasePermission):
 
 
 class IsCategoryWriterOrOwner(permissions.BasePermission):
-    def has_permission(self, request, view):
+    def has_permission(self, request: Request, view) -> bool:
         if not request.user.is_authenticated:
             return False
 
@@ -78,7 +80,7 @@ class IsCategoryWriterOrOwner(permissions.BasePermission):
 
         return True
 
-    def has_object_permission(self, request, view, obj):
+    def has_object_permission(self, request: Request, view, obj: Category) -> bool:
         if not request.user.is_authenticated:
             return False
 
@@ -100,7 +102,7 @@ class IsCategoryWriterOrOwner(permissions.BasePermission):
 
 
 class IsCommentWriterOrOwner(permissions.BasePermission):
-    def has_permission(self, request, view):
+    def has_permission(self, request: Request, view) -> bool:
         if not request.user.is_authenticated:
             return False
 
@@ -116,7 +118,7 @@ class IsCommentWriterOrOwner(permissions.BasePermission):
 
         return True
 
-    def has_object_permission(self, request, view, obj):
+    def has_object_permission(self, request: Request, view, obj: Comment):
         if not request.user.is_authenticated:
             return False
 

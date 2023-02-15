@@ -23,7 +23,7 @@ class BotManager:
         self.tg_client = TgClient()
         self.offset = 0
 
-    def get_updates(self):
+    def get_updates(self) -> None:
         """Метод для получения и сохранения в экземпляре всех новых сообщений с telegram-клиента
 
         """
@@ -48,7 +48,7 @@ class BotManager:
         user, _ = TgUser.objects.get_or_create(tg_user_id=self.user_id, tg_chat_id=self.chat_id)
         return user
 
-    def verificate_user(self):
+    def verificate_user(self) -> None:
         """Метод записывает в базу сгенерированный случайный код для верификации и отправляет его пользователю
 
         """
@@ -62,7 +62,7 @@ class BotManager:
         """
         return bool(self.current_user.app_user)
 
-    def get_user_state(self):
+    def get_user_state(self) -> None:
         """Метод созхраняет в экземпляр найденную или создает для пользователя TgState запись в БД
         (для отслеживания на каком этапе создания новой цели пользователь находится)
 
@@ -70,7 +70,7 @@ class BotManager:
         state, _ = TgState.objects.get_or_create(tg_user=self.current_user)
         self.current_state: TgState = state
 
-    def get_user_step(self):
+    def get_user_step(self) -> None:
         """Метод возвращает текущий "этап" пользователя
         (0 - не создает, 1-2-3 - задает категорию-задает название цели-этап генерации новой цели)
 
@@ -94,7 +94,11 @@ class BotManager:
         """Метод формирует и возвращает строку со списком категорий пользователя или строку с ответом что их нет
 
         """
-        user_categories = Category.objects.filter(board__participants__user=self.current_user.app_user, board__participants__role__in=[1,2], is_deleted=False)
+        user_categories = Category.objects.filter(
+            board__participants__user=self.current_user.app_user,
+            board__participants__role__in=[1, 2],
+            is_deleted=False
+        )
 
         if user_categories:
             categories_list = [f"#{cat.id} {cat.title}" for cat in user_categories]
@@ -122,10 +126,10 @@ class BotManager:
         else:
             filters.pop('pk')
 
-        user_categories = Category.objects.filter(**filters).first()
-        return user_categories
+        user_category = Category.objects.filter(**filters).first()
+        return user_category
 
-    def set_user_category(self, category: Category):
+    def set_user_category(self, category: Category) -> None:
         """Метод записывает в state (состояние) пользователя категорию, к которой он хочет создать цель
 
         """
@@ -141,7 +145,7 @@ class BotManager:
                                            due_date=datetime.date.today())
         return created_goal
 
-    def step_zero(self):
+    def step_zero(self) -> None:
         """Метод проверяет какую комманду ввёл пользователь
         и в зависимости от этого пишет пользователю ответ с дальнейшими инструкциями
 
@@ -167,7 +171,7 @@ class BotManager:
         else:
             self.tg_client.send_message(self.chat_id, f"Wrong command.\nAvailable commands:\n/goals \n/create")
 
-    def step_one(self):
+    def step_one(self) -> None:
         """Метод ищет категорию по номеру или названию (содержимое сообщение пользователя).
         В случае нахождения - повышает этап пользователя до 2
         Иначе повосторно отправляет запрос со списком категорий
@@ -184,7 +188,7 @@ class BotManager:
                                         f"{self.get_user_categories()}\n"
                                         f"Also you can send /cancel to abort")
 
-    def step_two(self):
+    def step_two(self) -> None | bool:
         """Метод записывает в state (состояние) title полученный отпользователя если его длина
         не превышает 100 символов (ограничение модели БД). Иначе возвращает пояснение
         с просит повторное введение title
@@ -199,7 +203,7 @@ class BotManager:
                                         f"Maximum length: 100\n"
                                         f"Write title again")
 
-    def step_three(self):
+    def step_three(self) -> None:
         """Метод создает цель, обнуляет state пользователя и отправляет сообщение об успехе с данными цели
 
         """
@@ -208,7 +212,7 @@ class BotManager:
         self.tg_client.send_message(self.chat_id, f"Goal successfully created\n"
                                         f"#{created_goal.id} {created_goal.title}")
 
-    def proceed_by_steps(self):
+    def proceed_by_steps(self) -> None:
         """Метод проводит пользователя в зависимости от его этапа по соответствующим методам
         Так же следит за сообщением /cancel для отмены процесса создания цели
 
@@ -235,7 +239,7 @@ class BotManager:
             if is_ready_to_create:
                 self.step_three()
 
-    def collect_data(self, message: UpdateObj):
+    def collect_data(self, message: UpdateObj) -> None:
         """Метод собирает в экземпляр необходимые для алгоритма данные
 
         """
@@ -244,7 +248,7 @@ class BotManager:
         self.user_id = message.message.from_.id
         self.message = message.message.text
 
-    def process_response(self):
+    def process_response(self) -> None:
         """Метод обрабатывает новые сообщения от пользователей, проверяет верифицирован ли пользователь,
         верифицирует в случае необходимости. После верификации запускает основной алгоритм работы с пользователем
 

@@ -11,11 +11,11 @@ urlpatterns = [
                                                               'delete': 'destroy'})),
 
     #goals
-    path('goal/list', views.GoalsViews.as_view({'get': 'list'})),
-    path('goal/create', views.GoalsViews.as_view({'post': 'create'})),
+    path('goal/list', views.GoalsViews.as_view({'get': 'list'}), name='list goals'),
+    path('goal/create', views.GoalsViews.as_view({'post': 'create'}), name='create goal'),
     path('goal/<pk>', views.GoalsViews.as_view({'get': 'retrieve',
                                                 'put': 'update',
-                                                'delete': 'destroy'})),
+                                                'delete': 'destroy'}), name='retrieve goal'),
 
     #comments
     path('goal_comment/list', views.CommentsViews.as_view({'get': 'list'})),
