@@ -1,4 +1,4 @@
-import factory, factory.django
+import factory.django
 from pytest_factoryboy import register
 
 from core.models import User

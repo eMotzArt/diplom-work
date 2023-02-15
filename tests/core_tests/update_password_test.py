@@ -2,7 +2,6 @@ import pytest
 from django.urls import reverse
 
 from core.models import User
-from core.serializers import ProfileRetrieveUpdateSerializer
 from tests.fixtures import TEST_USER_NAME, TEST_USER_PASSWORD
 
 ROUTE = '/core/update_password'

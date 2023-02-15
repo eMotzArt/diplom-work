@@ -1,6 +1,6 @@
 import pytest
 from django.urls import reverse
-from tests.factories import BoardParticipantFactory, GoalFactory
+from tests.factories import BoardParticipantFactory
 
 # ROUTE = '/goals/goal/<pk:int>/'
 

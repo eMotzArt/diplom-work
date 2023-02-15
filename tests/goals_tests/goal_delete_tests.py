@@ -1,9 +1,6 @@
 import pytest
 from django.urls import reverse
 
-from goals.models import Goal
-from goals.serializers import GoalListSerializer
-
 # ROUTE = '/goals/goal/<pk:int>/'
 
 @pytest.mark.django_db

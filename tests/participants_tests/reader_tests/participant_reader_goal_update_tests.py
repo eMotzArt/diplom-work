@@ -1,8 +1,6 @@
 import pytest
 from django.urls import reverse
 
-from core.serializers import ProfileRetrieveUpdateSerializer
-from goals.models import Goal
 from tests.factories import CategoryFactory, BoardParticipantFactory
 
 

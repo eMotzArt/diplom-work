@@ -1,6 +1,6 @@
 import pytest
 
-from tests.factories import UserFactory, BoardFactory, CategoryFactory, GoalFactory, BoardParticipantFactory
+from tests.factories import BoardFactory, CategoryFactory, GoalFactory, BoardParticipantFactory
 
 TEST_USER_NAME = 'testuser1'
 TEST_USER_PASSWORD = '13579TfCWR'

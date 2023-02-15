@@ -3,8 +3,6 @@ import datetime
 import pytest
 from django.urls import reverse
 
-from goals.models import Goal
-from goals.serializers import GoalCreateSerializer
 from tests.factories import BoardParticipantFactory, CategoryFactory
 
 # ROUTE = '/goals/goal/create'
